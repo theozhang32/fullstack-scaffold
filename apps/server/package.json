@@ -15,6 +15,7 @@
     "lint:fix": "eslint . --cache --fix"
   },
   "dependencies": {
+    "@fullstack-scaffold/config": "workspace:*",
     "@fullstack-scaffold/shared": "workspace:*",
     "@mikro-orm/core": "catalog:backend",
     "@mikro-orm/migrations": "catalog:",

@@ -2,17 +2,16 @@
  * 初始化脚本：应用未执行的迁移 + 确保存在初始管理员账号。
  * 用法：pnpm --filter @fullstack-scaffold/server db:seed
  */
-import process from 'node:process'
 import { MikroORM } from '@mikro-orm/core'
 import bcrypt from 'bcryptjs'
-import { createMikroOrmOptions } from '../src/mikro-orm.config'
+import mikroOrmOptions from '../src/mikro-orm.config'
 import { UserEntity } from '../src/modules/users/user.entity'
 
 const ADMIN_USERNAME = 'admin'
 const ADMIN_DEFAULT_PASSWORD = 'admin123456'
 
 async function main() {
-  const orm = await MikroORM.init(createMikroOrmOptions(process.env.DB_STORAGE ?? './data/scaffold.db'))
+  const orm = await MikroORM.init(mikroOrmOptions)
 
   const pending = await orm.migrator.getPending()
   if (pending.length > 0) {

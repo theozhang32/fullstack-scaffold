@@ -4,8 +4,8 @@
 
 | 层 | 技术 |
 | --- | --- |
-| 前端 `packages/app` | Vue 3 + vue-router + pinia，antdv-next（自动按需引入）+ tailwindcss v4 |
-| 后端 `packages/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 SQLite）+ Swagger + pino 日志 + JWT |
+| 前端 `apps/web` | Vue 3 + vue-router + pinia，antdv-next（自动按需引入）+ tailwindcss v4 |
+| 后端 `apps/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 SQLite）+ Swagger + pino 日志 + JWT |
 | 共享 `packages/shared` | 前后端同源类型/常量，tsdown 构建出 ESM + CJS |
 | 基础 `packages/tsconfig` | 共享 tsconfig 预设（`base.json` / `nestjs.json`） |
 
@@ -17,8 +17,8 @@
 pnpm install
 
 # 后端环境变量（JWT_SECRET 需 ≥32 字符，可用 openssl rand -hex 48 生成）
-cp packages/server/.env.example packages/server/.env
-$EDITOR packages/server/.env
+cp apps/server/.env.example apps/server/.env
+$EDITOR apps/server/.env
 
 # 初始化数据库：应用迁移 + 创建初始管理员 admin / admin123456
 pnpm --filter @fullstack-scaffold/server db:seed
@@ -30,13 +30,13 @@ pnpm dev
 - 前端：<http://localhost:5173>
 - Swagger 文档：<http://localhost:3100/api/docs>（默认开发开启，生产关闭，`SWAGGER_ENABLED` 可显式控制）
 
-> 端口默认 3100（3000 常被本机工具占用）；如需修改，同步改 `packages/server/.env` 的 `PORT` 与 `packages/app/vite.config.ts` 的 `nestTarget`。
+> 端口默认 3100（3000 常被本机工具占用）；如需修改，同步改 `apps/server/.env` 的 `PORT` 与 `apps/web/vite.config.ts` 的 `nestTarget`。
 
 ## 目录结构
 
 ```
-packages/
-├── app/                        # 前端（@fullstack-scaffold/web）
+apps/
+├── web/                        # 前端（@fullstack-scaffold/web）
 │   └── src/
 │       ├── api/                # 端口层：http.ts（唯一网络出入口）+ 各模块 API
 │       ├── composables/        # feedback 等 UI 助手
@@ -45,22 +45,23 @@ packages/
 │       ├── stores/             # pinia store（session）
 │       ├── views/              # 页面（AppLayout 壳 + 各业务页）
 │       └── styles/             # tailwind 入口 + antdv 兼容层
-├── server/                     # 后端（@fullstack-scaffold/server）
-│   ├── scripts/seed.ts         # db:seed：迁移 + 初始管理员
-│   └── src/
-│       ├── common/             # 统一响应包/过滤器/拦截器/守卫/装饰器/openapi 工具/分页
-│       ├── config/env.ts       # zod 环境变量校验（启动即失败）
-│       ├── entities/index.ts   # MikroORM 实体注册表
-│       ├── migrations/         # 数据库迁移（schema 变更唯一途径）
-│       ├── mikro-orm.config.ts # ORM 配置（app 与 CLI 共用）
-│       └── modules/            # 业务模块（auth、users 示例）
-│           └── users/
-│               ├── user.entity.ts        # 实体定义
-│               ├── user.repository.ts    # 数据访问层
-│               ├── user.dto.ts           # zod schema + DTO
-│               ├── user.service.ts       # 业务编排 + DTO 映射
-│               ├── user.controller.ts    # 路由 + 文档装饰器
-│               └── users.module.ts
+└── server/                     # 后端（@fullstack-scaffold/server）
+    ├── scripts/seed.ts         # db:seed：迁移 + 初始管理员
+    └── src/
+        ├── common/             # 统一响应包/过滤器/拦截器/守卫/装饰器/openapi 工具/分页
+        ├── config/env.ts       # zod 环境变量校验（启动即失败）
+        ├── entities/index.ts   # MikroORM 实体注册表
+        ├── migrations/         # 数据库迁移（schema 变更唯一途径）
+        ├── mikro-orm.config.ts # ORM 配置（app 与 CLI 共用）
+        └── modules/            # 业务模块（auth、users 示例）
+            └── users/
+                ├── user.entity.ts        # 实体定义
+                ├── user.repository.ts    # 数据访问层
+                ├── user.dto.ts           # zod schema + DTO
+                ├── user.service.ts       # 业务编排 + DTO 映射
+                ├── user.controller.ts    # 路由 + 文档装饰器
+                └── users.module.ts
+packages/
 ├── shared/                     # @fullstack-scaffold/shared（tsdown 构建）
 └── tsconfig/                   # 共享 tsconfig 预设
 ```
@@ -98,7 +99,7 @@ packages/
 
 | 命令 | 说明 |
 | --- | --- |
-| `pnpm dev` / `dev:app` / `dev:server` | 并行/单独启动前后端 |
+| `pnpm dev` / `dev:web` / `dev:server` | 并行/单独启动前后端 |
 | `pnpm build` | 按依赖顺序构建（shared → server/app） |
 | `pnpm lint` / `lint:fix` | 全仓 ESLint（@antfu/config） |
 | `pnpm --filter @fullstack-scaffold/server migration:create` | 生成迁移 |

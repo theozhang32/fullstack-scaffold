@@ -1,6 +1,7 @@
 shellEmulator: true
 
 packages:
+  - apps/*
   - packages/*
 
 allowBuilds:
@@ -17,6 +18,7 @@ catalog:
   bcryptjs: ^3.0.3
   dotenv: ^17.4.2
   tsx: ^4.23.13
+  zod: ^4.1.12
 
 catalogs:
   backend:
@@ -55,6 +57,7 @@ catalogs:
     '@vitejs/plugin-vue': ^6.0.8
     '@vue/tsconfig': ^0.9.1
     antdv-next: ^1.5.1
+    axios: ^1.7.9
     pinia: ^4.0.3
     tailwindcss: ^4.3.3
     unplugin-auto-import: ^21.1.0

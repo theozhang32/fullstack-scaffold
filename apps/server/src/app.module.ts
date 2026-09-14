@@ -11,7 +11,7 @@ import { AppController } from './app.controller'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 import { RolesGuard } from './common/guards/roles.guard'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor'
-import { validateEnv } from './config/env'
+import { envSchema, loadConfig, validateEnv } from './config'
 import { createMikroOrmOptions } from './mikro-orm.config'
 import { AuthModule } from './modules/auth/auth.module'
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard'
@@ -26,7 +26,10 @@ import { UsersModule } from './modules/users/users.module'
       ...(process.env.NODE_ENV !== 'production'
         ? { envFilePath: [resolve(__dirname, '../.env')] }
         : {}),
-      validate: validateEnv as unknown as (config: Record<string, unknown>) => Record<string, unknown>,
+      validate: validateEnv,
+      // load 执行时 ConfigService 尚未组装；validate 已把 .env 读入 process.env，
+      // 此处重新 parse 取得带默认值的 env，派生运行时配置，避免中间可变变量
+      load: [() => loadConfig(envSchema.parse(process.env))],
     }),
     LoggerModule.forRoot({
       pinoHttp: {
@@ -40,7 +43,7 @@ import { UsersModule } from './modules/users/users.module'
     MikroOrmModule.forRootAsync({
       driver: SqliteDriver as never,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => createMikroOrmOptions(config.getOrThrow<string>('DB_STORAGE')),
+      useFactory: (config: ConfigService) => createMikroOrmOptions(config.getOrThrow<string>('DB_URL')),
     }),
     UsersModule,
     AuthModule,

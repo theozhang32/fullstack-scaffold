@@ -6,10 +6,10 @@
   "scripts": {
     "ci": "pnpm install --frozen-lockfile",
     "dev": "pnpm --parallel --stream --filter @fullstack-scaffold/web --filter @fullstack-scaffold/server run dev",
-    "dev:app": "pnpm --filter @fullstack-scaffold/web dev",
+    "dev:web": "pnpm --filter @fullstack-scaffold/web dev",
     "dev:server": "pnpm --filter @fullstack-scaffold/server dev",
     "build": "pnpm --filter @fullstack-scaffold/web... --filter @fullstack-scaffold/server... run build",
-    "build:app": "pnpm --filter @fullstack-scaffold/web... build",
+    "build:web": "pnpm --filter @fullstack-scaffold/web... build",
     "build:server": "pnpm --filter @fullstack-scaffold/server... build",
     "preview": "pnpm --filter @fullstack-scaffold/web preview",
     "lint": "pnpm -r --parallel --if-present run lint",

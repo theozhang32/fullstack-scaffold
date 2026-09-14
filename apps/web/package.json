@@ -12,8 +12,10 @@
   },
   "dependencies": {
     "@antdv-next/icons": "catalog:frontend",
+    "@fullstack-scaffold/config": "workspace:*",
     "@fullstack-scaffold/shared": "workspace:*",
     "antdv-next": "catalog:frontend",
+    "axios": "catalog:frontend",
     "pinia": "catalog:frontend",
     "vue": "catalog:frontend",
     "vue-router": "catalog:frontend"

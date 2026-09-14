@@ -1,4 +1,5 @@
 import type { AuthUser } from '../../common/decorators/current-user.decorator'
+import type { ServerConfig } from '../../config'
 import type { User } from '../users/user.entity'
 import type { UserDto } from '../users/user.service'
 import type { LoginInput } from './auth.dto'
@@ -55,8 +56,8 @@ export class AuthService {
       role: user.role,
     }
     const token = await this.jwtService.signAsync(payload)
-    const expiresIn = this.config.getOrThrow<string>('JWT_EXPIRES_IN')
-    const ms = parseDurationToMs(expiresIn)
+    const server = this.config.getOrThrow<ServerConfig>('server')
+    const ms = parseDurationToMs(server.jwt.expiresIn)
     return {
       token,
       expiresAt: new Date(Date.now() + ms),
