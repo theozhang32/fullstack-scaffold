@@ -1,0 +1,9 @@
+{
+  "extends": "@fullstack-scaffold/tsconfig/base.json",
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": false,
+    "isolatedDeclarations": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src"]
+}

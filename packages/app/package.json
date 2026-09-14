@@ -1,0 +1,37 @@
+{
+  "name": "@fullstack-scaffold/web",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix"
+  },
+  "dependencies": {
+    "@antdv-next/icons": "catalog:frontend",
+    "@fullstack-scaffold/shared": "workspace:*",
+    "antdv-next": "catalog:frontend",
+    "pinia": "catalog:frontend",
+    "vue": "catalog:frontend",
+    "vue-router": "catalog:frontend"
+  },
+  "devDependencies": {
+    "@antdv-next/auto-import-resolver": "catalog:frontend",
+    "@antdv-next/tailwind": "catalog:frontend",
+    "@antfu/eslint-config": "catalog:dev",
+    "@fullstack-scaffold/tsconfig": "workspace:*",
+    "@tailwindcss/vite": "catalog:frontend",
+    "@vitejs/plugin-vue": "catalog:frontend",
+    "@vue/tsconfig": "catalog:frontend",
+    "eslint": "catalog:dev",
+    "tailwindcss": "catalog:frontend",
+    "typescript": "catalog:dev",
+    "unplugin-auto-import": "catalog:frontend",
+    "unplugin-vue-components": "catalog:frontend",
+    "vite": "catalog:frontend",
+    "vue-tsc": "catalog:frontend"
+  }
+}

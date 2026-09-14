@@ -1,0 +1,52 @@
+{
+  "name": "@fullstack-scaffold/server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "migration:create": "MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 mikro-orm migration:create",
+    "migration:up": "MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 mikro-orm migration:up",
+    "migration:down": "MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 mikro-orm migration:down",
+    "migration:pending": "MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 mikro-orm migration:pending",
+    "db:seed": "MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 tsx scripts/seed.ts",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix"
+  },
+  "dependencies": {
+    "@fullstack-scaffold/shared": "workspace:*",
+    "@mikro-orm/core": "catalog:backend",
+    "@mikro-orm/migrations": "catalog:",
+    "@mikro-orm/nestjs": "catalog:backend",
+    "@mikro-orm/sqlite": "catalog:backend",
+    "@nestjs/common": "catalog:backend",
+    "@nestjs/config": "catalog:backend",
+    "@nestjs/core": "catalog:backend",
+    "@nestjs/jwt": "catalog:backend",
+    "@nestjs/platform-express": "catalog:backend",
+    "@nestjs/swagger": "catalog:backend",
+    "bcryptjs": "catalog:",
+    "dotenv": "catalog:",
+    "nestjs-pino": "catalog:backend",
+    "nestjs-zod": "catalog:backend",
+    "pino": "catalog:backend",
+    "pino-http": "catalog:backend",
+    "reflect-metadata": "catalog:backend",
+    "rxjs": "catalog:backend",
+    "zod": "catalog:backend"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:dev",
+    "@fullstack-scaffold/tsconfig": "workspace:*",
+    "@mikro-orm/cli": "catalog:",
+    "@nestjs/cli": "catalog:backend",
+    "@nestjs/schematics": "catalog:backend",
+    "@types/express": "catalog:dev",
+    "@types/node": "catalog:dev",
+    "eslint": "catalog:dev",
+    "pino-pretty": "catalog:dev",
+    "tsx": "catalog:",
+    "typescript": "catalog:backend"
+  }
+}

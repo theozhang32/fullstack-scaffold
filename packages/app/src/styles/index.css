@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "@antdv-next/tailwind/compat.css";
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+/* a-app 包裹层默认无高度，撑满视口以使内部 layout h-full 生效 */
+.ant-app {
+  height: 100%;
+}
+
+body {
+  background: #f5f7fa;
+}
