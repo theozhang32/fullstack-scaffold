@@ -2,6 +2,8 @@
  * 业务错误语义：统一承接 API 层错误（HTTP 状态码 + 服务端 message）的包装，
  * View / Store 只需 BizError.from(e).message 即可拿到可展示文案。
  */
+import { ApiError } from '@/api/http'
+
 export class BizError extends Error {
   readonly code: string | number
   readonly details?: unknown
@@ -16,6 +18,8 @@ export class BizError extends Error {
   static from(e: unknown): BizError {
     if (e instanceof BizError)
       return e
+    if (e instanceof ApiError)
+      return new BizError(e.message, e.code, e.details)
     if (e instanceof Error)
       return new BizError(e.message, 'RUNTIME_ERROR')
     return new BizError('未知错误', 'UNKNOWN')

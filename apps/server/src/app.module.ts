@@ -1,3 +1,4 @@
+import type { ServerConfig } from './config'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
@@ -5,6 +6,7 @@ import { SqliteDriver } from '@mikro-orm/sqlite'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler'
 import { LoggerModule } from 'nestjs-pino'
 import { ZodValidationPipe } from 'nestjs-zod'
 import { AppController } from './app.controller'
@@ -16,6 +18,16 @@ import { createMikroOrmOptions } from './mikro-orm.config'
 import { AuthModule } from './modules/auth/auth.module'
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard'
 import { UsersModule } from './modules/users/users.module'
+
+function pinoRedactPaths(log: ServerConfig['log']): string[] {
+  const fromFields = log.redactFields.flatMap(field => [
+    field,
+    `req.body.${field}`,
+    `req.query.${field}`,
+  ])
+  const fromPaths = log.redactPaths.map(path => path.startsWith('/') ? path.slice(1) : path)
+  return [...new Set([...fromFields, ...fromPaths, 'req.headers.authorization'])]
+}
 
 @Module({
   imports: [
@@ -31,19 +43,30 @@ import { UsersModule } from './modules/users/users.module'
       // 此处重新 parse 取得带默认值的 env，派生运行时配置，避免中间可变变量
       load: [() => loadConfig(envSchema.parse(process.env))],
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? { target: 'pino-pretty', options: { singleLine: true } }
-            : undefined,
-        autoLogging: { ignore: req => String(req.url ?? '').includes('/health') },
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const server = config.getOrThrow<ServerConfig>('server')
+        return {
+          pinoHttp: {
+            transport:
+              process.env.NODE_ENV !== 'production'
+                ? { target: 'pino-pretty', options: { singleLine: true } }
+                : undefined,
+            redact: pinoRedactPaths(server.log),
+            autoLogging: { ignore: (req: { url?: string }) => String(req.url ?? '').includes('/health') },
+          },
+        }
       },
     }),
     MikroOrmModule.forRootAsync({
       driver: SqliteDriver as never,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => createMikroOrmOptions(config.getOrThrow<string>('DB_URL')),
+    }),
+    ThrottlerModule.forRoot({
+      errorMessage: '请求过于频繁，请稍后再试',
+      throttlers: [{ name: 'default', ttl: 60_000, limit: 120 }],
     }),
     UsersModule,
     AuthModule,
@@ -61,6 +84,10 @@ import { UsersModule } from './modules/users/users.module'
     {
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_GUARD,

@@ -13,6 +13,16 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
+    },
+    "./roles": {
+      "import": {
+        "types": "./dist/roles.d.mts",
+        "default": "./dist/roles.mjs"
+      },
+      "require": {
+        "types": "./dist/roles.d.cts",
+        "default": "./dist/roles.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
@@ -26,6 +36,9 @@
     "prepare": "tsdown",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --cache --fix"
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",

@@ -1,21 +1,13 @@
 import type { AuthUser } from '../../common/decorators/current-user.decorator'
+import { loginResultSchema, userViewSchema } from '@fullstack-scaffold/shared'
 import { Body, Controller, Get, Post } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { Throttle } from '@nestjs/throttler'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { Public } from '../../common/decorators/public.decorator'
-import { ApiOkData, ZodBody } from '../../common/openapi'
+import { ApiOkData, ZodBody, zodToSchema } from '../../common/openapi'
 import { LoginDto } from './auth.dto'
 import { AuthService } from './auth.service'
-
-const loginDataSchema = {
-  type: 'object',
-  properties: {
-    token: { type: 'string', description: 'JWT 访问令牌，后续请求放在 Authorization: Bearer <token>' },
-    expiresAt: { type: 'string', format: 'date-time', description: '令牌过期时间' },
-    user: { type: 'object', description: '当前用户信息（id / username / displayName / role）' },
-  },
-  required: ['token', 'expiresAt', 'user'],
-}
 
 @ApiTags('auth')
 @Controller('auth')
@@ -24,9 +16,10 @@ export class AuthController {
 
   @Post('login')
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: '账号密码登录（公开）' })
   @ZodBody(LoginDto)
-  @ApiOkData(loginDataSchema, '登录成功，返回 token 与用户信息')
+  @ApiOkData(zodToSchema(loginResultSchema, 'output'), '登录成功，返回 token 与用户信息')
   login(@Body() body: LoginDto) {
     return this.authService.login(body)
   }
@@ -47,7 +40,7 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: '当前登录用户信息' })
-  @ApiOkData({ type: 'object', description: '当前用户信息（id / username / displayName / role）' })
+  @ApiOkData(zodToSchema(userViewSchema, 'output'), '当前用户信息')
   me(@CurrentUser() operator: AuthUser) {
     return this.authService.getMe(operator)
   }

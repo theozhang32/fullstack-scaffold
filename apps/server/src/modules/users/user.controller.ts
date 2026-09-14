@@ -1,12 +1,15 @@
 import type { AuthUser } from '../../common/decorators/current-user.decorator'
+import { userViewSchema } from '@fullstack-scaffold/shared'
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { Roles } from '../../common/decorators/roles.decorator'
-import { ApiOkData, entityObject, nullData, paginatedData, ZodBody, ZodParams, ZodQuery } from '../../common/openapi'
+import { ApiOkData, nullData, paginatedData, ZodBody, ZodParams, ZodQuery, zodToSchema } from '../../common/openapi'
 import { IdParamDto } from '../../common/utils/pagination'
 import { CreateUserDto, ListUsersQueryDto, UpdateUserDto } from './user.dto'
-import { toUserDto, UsersService } from './user.service'
+import { toUserView, UsersService } from './user.service'
+
+const userViewJson = zodToSchema(userViewSchema, 'output')
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -18,7 +21,7 @@ export class UsersController {
   @Get()
   @ApiOperation({ summary: '用户列表', description: '分页 + 关键字（账号/姓名）筛选' })
   @ZodQuery(ListUsersQueryDto)
-  @ApiOkData(paginatedData())
+  @ApiOkData(paginatedData(userViewJson))
   list(@Query() query: ListUsersQueryDto) {
     return this.usersService.list(query)
   }
@@ -26,15 +29,15 @@ export class UsersController {
   @Get(':id')
   @ApiOperation({ summary: '用户详情' })
   @ZodParams(IdParamDto)
-  @ApiOkData(entityObject)
+  @ApiOkData(userViewJson)
   get(@Param() params: IdParamDto) {
-    return this.usersService.mustFind(params.id).then(toUserDto)
+    return this.usersService.mustFind(params.id).then(toUserView)
   }
 
   @Post()
   @ApiOperation({ summary: '创建用户' })
   @ZodBody(CreateUserDto)
-  @ApiOkData(entityObject, '创建后的用户')
+  @ApiOkData(userViewJson, '创建后的用户')
   create(@Body() body: CreateUserDto, @CurrentUser() operator: AuthUser) {
     return this.usersService.create(body, operator)
   }
@@ -43,7 +46,7 @@ export class UsersController {
   @ApiOperation({ summary: '更新用户（姓名/角色/启用状态/备注）' })
   @ZodParams(IdParamDto)
   @ZodBody(UpdateUserDto)
-  @ApiOkData(entityObject, '更新后的用户')
+  @ApiOkData(userViewJson, '更新后的用户')
   update(@Param() params: IdParamDto, @Body() body: UpdateUserDto) {
     return this.usersService.updateProfile(params.id, body)
   }

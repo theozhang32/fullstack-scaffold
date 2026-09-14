@@ -1,5 +1,5 @@
+import type { ListUsersQuery } from '@fullstack-scaffold/shared'
 import type { FilterQuery, RequiredEntityData } from '@mikro-orm/core'
-import type { ListUsersQuery } from './user.dto'
 import type { User } from './user.entity'
 import { EntityRepository } from '@mikro-orm/core'
 

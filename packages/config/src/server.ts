@@ -1,7 +1,7 @@
 /*
  * @Date: 2026-09-14 19:57:49
  * @LastEditors: Theo Zhang
- * @LastEditTime: 2026-09-14 20:25:04
+ * @LastEditTime: 2026-09-14 21:13:01
  * @FilePath: /fullstack-scaffold/packages/config/src/server.ts
  */
 import { z } from 'zod'
@@ -21,12 +21,12 @@ import { z } from 'zod'
 
 const corsSchema = z.object({
   /** 是否启用 CORS；false 时完全不挂载 cors 中间件 */
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().default(false),
   /**
    * 允许的来源匹配规则：
-   * - 空数组：反射任意 Origin（允许全部）
+   * - 空数组：反射任意 Origin（允许全部）。生产环境禁止此配置（loader.ts 会拒绝启动）
    * - 非空数组：静态白名单（精确匹配），元素支持 `*` 通配符（如 `https://*.example.com`）
-   * 开发环境默认源由 loader.ts 根据 web.devPort 派生，不在此硬编码
+   * 开发环境默认源由 loader.ts 根据 web.devPort 派生；生产用 CORS_ORIGINS 注入
    * 动态场景（查 DB / 租户路由等）请在 main.ts 中用 origin 函数覆盖此默认值
    */
   allowedOrigins: z.array(z.string()).default([]),

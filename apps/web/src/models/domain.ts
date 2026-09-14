@@ -1,27 +1,21 @@
-import type { UserRole } from '@fullstack-scaffold/shared'
-
 /**
- * 领域类型入口：与服务端同源的枚举与通用结构（ApiResponse / Paginated / UserRole）
- * 收敛至共享包 @fullstack-scaffold/shared，经此处转出口。
- * 本文件仅保留客户端视角的类型（JSON 视图：日期为 ISO 字符串）与展示元数据。
+ * 领域类型入口：契约 schema 在 @fullstack-scaffold/shared；
+ * 本文件只转出口客户端需要的类型/枚举，并保留展示元数据。
+ * 不要 `export *` shared，以免把 zod schema 打进前端包。
  */
 
-export * from '@fullstack-scaffold/shared'
+import type { UserRole } from '@fullstack-scaffold/shared/roles'
 
-/** 用户（线上 JSON 视图，与服务端 UserDto 对齐） */
-export interface UserView {
-  id: number
-  username: string
-  displayName: string
-  role: UserRole
-  enabled: boolean
-  remark: string | null
-  hasPassword: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-// ---------------- 展示元数据 ----------------
+export type {
+  CreateUserInput,
+  ListUsersQueryInput,
+  LoginInput,
+  LoginResult,
+  UpdateUserInput,
+  UserRole,
+  UserView,
+} from '@fullstack-scaffold/shared'
+export { isUserRole, USER_ROLES } from '@fullstack-scaffold/shared/roles'
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   ADMIN: '管理员',

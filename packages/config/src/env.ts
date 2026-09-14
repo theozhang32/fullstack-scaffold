@@ -13,11 +13,14 @@ import { z } from 'zod'
  * - NODE_ENV：运行模式
  * - JWT_SECRET：JWT 签名密钥（敏感，必须注入）
  * - DB_URL：数据库连接/文件路径（部署相关）
+ * - CORS_ORIGINS：生产 CORS 白名单（逗号分隔 Origin）；开发环境由 loader 按 web.devPort 派生
  */
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET 至少 32 个字符'),
   DB_URL: z.string(),
+  /** 生产 CORS 白名单，逗号分隔 Origin；开发环境忽略，由 web.devPort 派生 */
+  CORS_ORIGINS: z.string().optional(),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -1,3 +1,9 @@
+/*
+ * @Date: 2026-09-14 19:57:56
+ * @LastEditors: Theo Zhang
+ * @LastEditTime: 2026-09-14 21:13:13
+ * @FilePath: /fullstack-scaffold/packages/config/src/loader.ts
+ */
 import type { Env } from './env'
 import type { ServerConfig } from './server'
 import type { WebConfig } from './web'
@@ -14,25 +20,35 @@ export interface AppConfig {
   server: ServerConfig
 }
 
+function parseCorsOrigins(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+}
+
 /**
  * 运行时配置加载器：供 ConfigModule.forRoot({ load }) 使用。
  *
  * 设计要点：
  * - 纯函数：接收已校验的 env，派生出运行时配置；CLI/非 Nest 上下文也可直接调用
  * - 不做异步 IO：保持配置初始化同步，避免下游 forRootAsync 时序复杂化
- * - env 覆盖可选：若某运行时配置项确需按环境调整，可在此处读取 process.env 作为覆盖源，
- *   但不进入 envSchema 强制校验，保持 .env 清单精简
+ * - env 覆盖可选：若某运行时配置项确需按环境调整，可在此处读取已校验的 env 作为覆盖源
  */
-export function loadConfig(_env: Env): AppConfig {
+export function loadConfig(env: Env): AppConfig {
   const web = webConfigSchema.parse({})
 
   const server = serverConfigSchema.parse({
     // 开发环境：CORS 默认源由 web.devPort 派生，避免与前端 dev 端口硬编码脱节
-    // 生产环境：allowedOrigins 留空（允许全部），如需收紧请在 loader 注入或 main.ts 用 origin 函数覆盖
-    cors: _env.NODE_ENV === 'development'
-      ? { allowedOrigins: [`http://localhost:${web.devPort}`] }
-      : {},
+    // 生产环境：必须显式白名单（env.CORS_ORIGINS）
+    cors: env.NODE_ENV === 'development'
+      ? { enabled: true, allowedOrigins: [`http://localhost:${web.devPort}`] }
+      : { allowedOrigins: parseCorsOrigins(env.CORS_ORIGINS) },
   })
+
+  if (env.NODE_ENV === 'production' && server.cors.enabled && server.cors.allowedOrigins.length === 0) {
+    throw new Error('生产环境 CORS.allowedOrigins 不能为空：请设置 CORS_ORIGINS（逗号分隔 Origin）')
+  }
 
   return { web, server }
 }

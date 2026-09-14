@@ -27,6 +27,7 @@
     "@nestjs/jwt": "catalog:backend",
     "@nestjs/platform-express": "catalog:backend",
     "@nestjs/swagger": "catalog:backend",
+    "@nestjs/throttler": "catalog:backend",
     "bcryptjs": "catalog:",
     "dotenv": "catalog:",
     "nestjs-pino": "catalog:backend",

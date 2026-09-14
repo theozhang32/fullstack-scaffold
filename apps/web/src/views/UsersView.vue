@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UserView } from '@/models/domain'
+import type { UserRole, UserView } from '@/models/domain'
 /**
  * 用户管理（示例页）：演示「列表查询 + 弹窗表单 + 删除确认」的完整 CRUD 范式。
  * 数据经 usersApi（api 端口层）进出，提示统一走 feedback。
@@ -74,7 +74,7 @@ const modalOpen = ref(false)
 const saving = ref(false)
 /** null=新建，非 null=编辑该用户 */
 const editingId = ref<number | null>(null)
-const form = reactive({ username: '', password: '', displayName: '', role: 'USER' as 'ADMIN' | 'USER', remark: '' })
+const form = reactive({ username: '', password: '', displayName: '', role: 'USER' as UserRole, remark: '' })
 
 function openCreate() {
   editingId.value = null

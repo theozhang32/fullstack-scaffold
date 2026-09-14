@@ -1,7 +1,6 @@
-import type { UserRole } from '@fullstack-scaffold/shared'
+import type { ListUsersQuery, ParsedCreateUser, ParsedUpdateUser, UserView } from '@fullstack-scaffold/shared'
 import type { Paginated } from '../../common/api-response'
 import type { AuthUser } from '../../common/decorators/current-user.decorator'
-import type { CreateUserInput, ListUsersQuery, UpdateUserInput } from './user.dto'
 import type { User } from './user.entity'
 import { InjectRepository } from '@mikro-orm/nestjs'
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
@@ -9,19 +8,7 @@ import bcrypt from 'bcryptjs'
 import { UserEntity } from './user.entity'
 import { UserRepository } from './user.repository'
 
-export interface UserDto {
-  id: number
-  username: string
-  displayName: string
-  role: UserRole
-  enabled: boolean
-  remark: string | null
-  hasPassword: boolean
-  createdAt: Date
-  updatedAt: Date
-}
-
-export function toUserDto(user: User): UserDto {
+export function toUserView(user: User): UserView {
   return {
     id: user.id,
     username: user.username,
@@ -30,8 +17,8 @@ export function toUserDto(user: User): UserDto {
     enabled: user.enabled,
     remark: user.remark ?? null,
     hasPassword: Boolean(user.passwordHash),
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
   }
 }
 
@@ -44,9 +31,9 @@ export class UsersService {
     private readonly usersRepo: UserRepository,
   ) {}
 
-  async list(query: ListUsersQuery): Promise<Paginated<UserDto>> {
+  async list(query: ListUsersQuery): Promise<Paginated<UserView>> {
     const [items, total] = await this.usersRepo.findPage(query)
-    return { items: items.map(toUserDto), total, page: query.page, pageSize: query.pageSize }
+    return { items: items.map(toUserView), total, page: query.page, pageSize: query.pageSize }
   }
 
   async findById(id: number): Promise<User | null> {
@@ -65,7 +52,7 @@ export class UsersService {
     return user
   }
 
-  async create(input: CreateUserInput, operator: AuthUser): Promise<UserDto> {
+  async create(input: ParsedCreateUser, operator: AuthUser): Promise<UserView> {
     const exists = await this.usersRepo.findByUsername(input.username)
     if (exists) {
       throw new ConflictException(`账号「${input.username}」已存在`)
@@ -83,10 +70,10 @@ export class UsersService {
       updatedAt: now,
       createdBy: operator.username,
     })
-    return toUserDto(user)
+    return toUserView(user)
   }
 
-  async updateProfile(id: number, input: UpdateUserInput): Promise<UserDto> {
+  async updateProfile(id: number, input: ParsedUpdateUser): Promise<UserView> {
     const user = await this.mustFind(id)
     this.usersRepo.assign(user, {
       ...(input.displayName !== undefined ? { displayName: input.displayName } : {}),
@@ -96,7 +83,7 @@ export class UsersService {
       updatedAt: new Date(),
     })
     await this.usersRepo.flush()
-    return toUserDto(user)
+    return toUserView(user)
   }
 
   async remove(id: number, operator: AuthUser): Promise<void> {

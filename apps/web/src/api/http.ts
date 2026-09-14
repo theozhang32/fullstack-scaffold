@@ -1,3 +1,4 @@
+import type { ApiResponse } from '@fullstack-scaffold/shared'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { defaultWebConfig } from '@fullstack-scaffold/config'
 /**
@@ -44,11 +45,7 @@ export function setToken(token: string): void {
 
 type Query = Record<string, string | number | boolean | null | undefined>
 
-interface Envelope<T> {
-  code: number
-  message: string
-  data: T
-}
+type Envelope<T> = ApiResponse<T>
 
 function handleUnauthorized(): void {
   setToken('')
@@ -56,9 +53,15 @@ function handleUnauthorized(): void {
   window.location.assign(`/login?redirect=${redirect}`)
 }
 
-/** 统一信封解包：成功直接返回 data，失败抛出 ApiError */
+/** 统一信封解包：code === 0 时返回 data，否则抛出 ApiError */
 function unwrap<T>(resp: AxiosResponse<Envelope<T>>): T {
   const envelope = resp.data
+  if (!envelope || typeof envelope !== 'object') {
+    throw new ApiError('响应格式无效', resp.status, 'INVALID_ENVELOPE')
+  }
+  if (envelope.code !== 0) {
+    throw new ApiError(envelope.message || '请求失败', resp.status, envelope.code)
+  }
   return envelope.data
 }
 

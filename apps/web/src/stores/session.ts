@@ -1,4 +1,4 @@
-import type { UserView } from '@/models/domain'
+import type { LoginInput, UserView } from '@fullstack-scaffold/shared'
 import { defineStore } from 'pinia'
 /**
  * 会话 Store（Pinia 单例）：持有 JWT 与当前用户，负责登录 / 登出 / 启动时恢复会话。
@@ -31,7 +31,7 @@ export const useSessionStore = defineStore('session', () => {
     setToken('')
   }
 
-  async function login(input: { username: string, password: string }) {
+  async function login(input: LoginInput) {
     try {
       adoptSession(await authApi.login(input))
     }

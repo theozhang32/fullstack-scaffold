@@ -1,20 +1,13 @@
+import type { LoginInput, LoginResult, UserView } from '@fullstack-scaffold/shared'
 import type { AuthUser } from '../../common/decorators/current-user.decorator'
 import type { ServerConfig } from '../../config'
 import type { User } from '../users/user.entity'
-import type { UserDto } from '../users/user.service'
-import type { LoginInput } from './auth.dto'
 import type { JwtPayload } from './jwt-auth.guard'
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import bcrypt from 'bcryptjs'
-import { toUserDto, UsersService } from '../users/user.service'
-
-export interface LoginResult {
-  token: string
-  expiresAt: Date
-  user: UserDto
-}
+import { toUserView, UsersService } from '../users/user.service'
 
 @Injectable()
 export class AuthService {
@@ -39,8 +32,8 @@ export class AuthService {
     return this.issueSession(user)
   }
 
-  async getMe(operator: AuthUser): Promise<UserDto> {
-    return toUserDto(await this.usersService.mustFind(operator.id))
+  async getMe(operator: AuthUser): Promise<UserView> {
+    return toUserView(await this.usersService.mustFind(operator.id))
   }
 
   /** 无状态 JWT：注销由客户端丢弃令牌完成 */
@@ -60,8 +53,8 @@ export class AuthService {
     const ms = parseDurationToMs(server.jwt.expiresIn)
     return {
       token,
-      expiresAt: new Date(Date.now() + ms),
-      user: toUserDto(user),
+      expiresAt: new Date(Date.now() + ms).toISOString(),
+      user: toUserView(user),
     }
   }
 }

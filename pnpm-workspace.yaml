@@ -33,6 +33,7 @@ catalogs:
     '@nestjs/platform-express': ~11.1.12
     '@nestjs/schematics': ~11.0.9
     '@nestjs/swagger': ^11.2.0
+    '@nestjs/throttler': ^6.5.0
     nestjs-pino: ^5.0.0
     nestjs-zod: ^5.5.0
     pino: ^10.0.0
