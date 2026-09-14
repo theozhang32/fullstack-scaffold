@@ -12,7 +12,7 @@ import { webConfigSchema } from './web'
 
 /**
  * 顶层配置对象：web / server 两个命名空间。
- * - env 仍以顶层键形式挂载（NODE_ENV / JWT_SECRET / DB_URL），由 ConfigModule.validate 注入
+ * - env 仍以顶层键形式挂载（NODE_ENV / JWT_SECRET / DB_DRIVER / DB_URL），由 ConfigModule.validate 注入
  * - web / server 为运行时配置，由 ConfigModule.load 注入
  */
 export interface AppConfig {

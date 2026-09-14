@@ -23,6 +23,7 @@ catalog:
 catalogs:
   backend:
     '@mikro-orm/core': ~7.1.14
+    '@mikro-orm/mysql': ~7.1.14
     '@mikro-orm/nestjs': ~7.1.0
     '@mikro-orm/sqlite': ~7.1.14
     '@nestjs/cli': ~11.0.16

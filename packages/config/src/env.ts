@@ -1,7 +1,7 @@
 /*
  * @Date: 2026-09-14 19:57:44
  * @LastEditors: Theo Zhang
- * @LastEditTime: 2026-09-14 20:20:48
+ * @LastEditTime: 2026-09-14 21:30:00
  * @FilePath: /fullstack-scaffold/packages/config/src/env.ts
  */
 import { z } from 'zod'
@@ -12,16 +12,33 @@ import { z } from 'zod'
  *
  * - NODE_ENV：运行模式
  * - JWT_SECRET：JWT 签名密钥（敏感，必须注入）
- * - DB_URL：数据库连接/文件路径（部署相关）
+ * - DB_DRIVER：数据库驱动（mysql | sqlite），默认 mysql
+ * - DB_URL：MySQL 为 mysql:// 连接串；SQLite 为文件路径
  * - CORS_ORIGINS：生产 CORS 白名单（逗号分隔 Origin）；开发环境由 loader 按 web.devPort 派生
  */
-export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  JWT_SECRET: z.string().min(32, 'JWT_SECRET 至少 32 个字符'),
-  DB_URL: z.string(),
-  /** 生产 CORS 白名单，逗号分隔 Origin；开发环境忽略，由 web.devPort 派生 */
-  CORS_ORIGINS: z.string().optional(),
-})
+export const envSchema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    JWT_SECRET: z.string().min(32, 'JWT_SECRET 至少 32 个字符'),
+    /** 数据库驱动；决定 MikroORM driver 与 DB_URL 语义 */
+    DB_DRIVER: z.enum(['sqlite', 'mysql']).default('mysql'),
+    /**
+     * - mysql：连接串，形如 mysql://user:pass@host:3306/dbname
+     * - sqlite：数据库文件路径（相对 server 包目录或绝对路径）
+     */
+    DB_URL: z.string().min(1, 'DB_URL 不能为空'),
+    /** 生产 CORS 白名单，逗号分隔 Origin；开发环境忽略，由 web.devPort 派生 */
+    CORS_ORIGINS: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.DB_DRIVER === 'mysql' && !/^mysql2?:\/\//i.test(data.DB_URL)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['DB_URL'],
+        message: 'DB_DRIVER=mysql 时，DB_URL 应为 mysql://user:pass@host:3306/dbname',
+      })
+    }
+  })
 
 export type Env = z.infer<typeof envSchema>
 

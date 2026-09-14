@@ -2,7 +2,6 @@ import type { ServerConfig } from './config'
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { MikroOrmModule } from '@mikro-orm/nestjs'
-import { SqliteDriver } from '@mikro-orm/sqlite'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core'
@@ -60,9 +59,13 @@ function pinoRedactPaths(log: ServerConfig['log']): string[] {
       },
     }),
     MikroOrmModule.forRootAsync({
-      driver: SqliteDriver as never,
+      // driver 由 createMikroOrmOptions 按 DB_DRIVER 注入；此处 as never 收口 Nest 泛型
+      driver: undefined as never,
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => createMikroOrmOptions(config.getOrThrow<string>('DB_URL')),
+      useFactory: (config: ConfigService) => createMikroOrmOptions(
+        config.getOrThrow<string>('DB_URL'),
+        config.getOrThrow<'sqlite' | 'mysql'>('DB_DRIVER'),
+      ),
     }),
     ThrottlerModule.forRoot({
       errorMessage: '请求过于频繁，请稍后再试',

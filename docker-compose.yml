@@ -1,4 +1,22 @@
 services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: scaffold
+      MYSQL_USER: scaffold
+      MYSQL_PASSWORD: scaffold
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
   server:
     build:
       context: .
@@ -9,11 +27,16 @@ services:
     environment:
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:?请在 .env 或环境中设置 JWT_SECRET（≥32 字符）}
-      DB_URL: /data/db.sqlite
+      DB_DRIVER: mysql
+      DB_URL: mysql://scaffold:scaffold@mysql:3306/scaffold
+      # 切 SQLite 示例：
+      # DB_DRIVER: sqlite
+      # DB_URL: /data/db.sqlite
       # 经 web 同域反代时通常不需要；若直连前端 Origin 再开启 CORS 并设置白名单
       # CORS_ORIGINS: http://localhost
-    volumes:
-      - server-data:/data
+    depends_on:
+      mysql:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/v1/health"]
       interval: 30s
@@ -35,4 +58,4 @@ services:
         condition: service_healthy
 
 volumes:
-  server-data:
+  mysql-data:

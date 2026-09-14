@@ -19,6 +19,7 @@
     "@fullstack-scaffold/shared": "workspace:*",
     "@mikro-orm/core": "catalog:backend",
     "@mikro-orm/migrations": "catalog:",
+    "@mikro-orm/mysql": "catalog:backend",
     "@mikro-orm/nestjs": "catalog:backend",
     "@mikro-orm/sqlite": "catalog:backend",
     "@nestjs/common": "catalog:backend",

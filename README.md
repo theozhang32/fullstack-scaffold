@@ -5,7 +5,7 @@
 | 层 | 技术 |
 | --- | --- |
 | 前端 `apps/web` | Vue 3 + vue-router + pinia，antdv-next（自动按需引入）+ tailwindcss v4 |
-| 后端 `apps/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 SQLite）+ Swagger + pino 日志 + JWT |
+| 后端 `apps/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 MySQL，可切 SQLite）+ Swagger + pino 日志 + JWT |
 | 契约 `packages/shared` | 前后端同源 zod schema / 类型 / 常量（用户、登录、分页、响应包），tsdown 构建出 ESM + CJS |
 | 配置 `packages/config` | env 校验 + web/server 运行时配置（端口、CORS、JWT、分页、日志脱敏） |
 | 基础 `packages/tsconfig` | 共享 tsconfig 预设（`base.json` / `nestjs.json`） |
@@ -118,7 +118,7 @@ packages/
 # 前端（nginx:80，静态资源 + /api 反代到 API_UPSTREAM）
 docker build --target web -t fullstack-scaffold-web .
 
-# 后端（node:3000，SQLite 默认写 /data/db.sqlite）
+# 后端（node:3000，默认 MySQL，需注入 DB_URL）
 docker build --target server -t fullstack-scaffold-server .
 ```
 
@@ -131,7 +131,7 @@ docker compose up --build
 ```
 
 - `web` 镜像通过环境变量 `API_UPSTREAM`（默认 `http://server:3000`）把 `/api` 反代到后端，与前端 `apiBaseUrl: /api/v1` 同域，无需开 CORS。
-- `server` 需注入 `JWT_SECRET`（≥32 字符）与 `DB_URL`（compose 默认 `/data/db.sqlite`）；数据目录建议挂卷。
+- `server` 需注入 `JWT_SECRET`（≥32 字符）与 `DB_URL`（compose 默认连同栈 `mysql` 服务）；`DB_DRIVER` 默认 `mysql`，可改为 `sqlite`。
 
 ## AI 辅助配置
 
