@@ -66,7 +66,7 @@ COPY --from=builder-server --chown=app:app /deploy ./
 
 USER app
 EXPOSE 3000
-# 默认 MySQL；编排需注入可用的 mysql:// DB_URL（及 JWT_SECRET / CORS_ORIGINS）
+# 默认 MySQL；编排需注入可用的 mysql:// DB_URL（及 JWT_SECRET / REDIS_URL / CORS_ORIGINS）
 ENV DB_DRIVER=mysql
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3000/api/v1/health >/dev/null || exit 1

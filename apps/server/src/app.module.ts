@@ -16,6 +16,7 @@ import { envSchema, loadConfig, validateEnv } from './config'
 import { createMikroOrmOptions } from './mikro-orm.config'
 import { AuthModule } from './modules/auth/auth.module'
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard'
+import { RedisModule } from './modules/redis/redis.module'
 import { UsersModule } from './modules/users/users.module'
 
 function pinoRedactPaths(log: ServerConfig['log']): string[] {
@@ -71,6 +72,7 @@ function pinoRedactPaths(log: ServerConfig['log']): string[] {
       errorMessage: '请求过于频繁，请稍后再试',
       throttlers: [{ name: 'default', ttl: 60_000, limit: 120 }],
     }),
+    RedisModule,
     UsersModule,
     AuthModule,
   ],

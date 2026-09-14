@@ -1,7 +1,7 @@
 /*
  * @Date: 2026-09-14 19:57:44
  * @LastEditors: Theo Zhang
- * @LastEditTime: 2026-09-14 21:30:00
+ * @LastEditTime: 2026-09-14 22:10:00
  * @FilePath: /fullstack-scaffold/packages/config/src/env.ts
  */
 import { z } from 'zod'
@@ -14,6 +14,7 @@ import { z } from 'zod'
  * - JWT_SECRET：JWT 签名密钥（敏感，必须注入）
  * - DB_DRIVER：数据库驱动（mysql | sqlite），默认 mysql
  * - DB_URL：MySQL 为 mysql:// 连接串；SQLite 为文件路径
+ * - REDIS_URL：Redis 7 连接串，形如 redis://[:password@]host:6379[/db]
  * - CORS_ORIGINS：生产 CORS 白名单（逗号分隔 Origin）；开发环境由 loader 按 web.devPort 派生
  */
 export const envSchema = z
@@ -27,6 +28,12 @@ export const envSchema = z
      * - sqlite：数据库文件路径（相对 server 包目录或绝对路径）
      */
     DB_URL: z.string().min(1, 'DB_URL 不能为空'),
+    /**
+     * Redis 7 连接串：
+     * - 明文：redis://[:password@]host:6379[/db]
+     * - TLS：rediss://[:password@]host:6379[/db]
+     */
+    REDIS_URL: z.string().min(1, 'REDIS_URL 不能为空'),
     /** 生产 CORS 白名单，逗号分隔 Origin；开发环境忽略，由 web.devPort 派生 */
     CORS_ORIGINS: z.string().optional(),
   })
@@ -36,6 +43,13 @@ export const envSchema = z
         code: 'custom',
         path: ['DB_URL'],
         message: 'DB_DRIVER=mysql 时，DB_URL 应为 mysql://user:pass@host:3306/dbname',
+      })
+    }
+    if (!/^rediss?:\/\//i.test(data.REDIS_URL)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['REDIS_URL'],
+        message: 'REDIS_URL 应为 redis:// 或 rediss:// 连接串，形如 redis://[:password@]host:6379[/db]',
       })
     }
   })

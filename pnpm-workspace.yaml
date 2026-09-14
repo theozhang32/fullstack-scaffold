@@ -22,10 +22,12 @@ catalog:
 
 catalogs:
   backend:
+    '@keyv/redis': ^5.1.6
     '@mikro-orm/core': ~7.1.14
     '@mikro-orm/mysql': ~7.1.14
     '@mikro-orm/nestjs': ~7.1.0
     '@mikro-orm/sqlite': ~7.1.14
+    '@nestjs/cache-manager': ^12.0.0
     '@nestjs/cli': ~11.0.16
     '@nestjs/common': ~11.1.12
     '@nestjs/config': ^4.0.2
@@ -35,6 +37,8 @@ catalogs:
     '@nestjs/schematics': ~11.0.9
     '@nestjs/swagger': ^11.2.0
     '@nestjs/throttler': ^6.5.0
+    cache-manager: ^7.2.9
+    keyv: ^5.6.0
     nestjs-pino: ^5.0.0
     nestjs-zod: ^5.5.0
     pino: ^10.0.0

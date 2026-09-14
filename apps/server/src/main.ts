@@ -1,3 +1,4 @@
+import type { INestApplication } from '@nestjs/common'
 import type { ServerConfig } from './config'
 import { MikroORM } from '@mikro-orm/core'
 import { ConfigService } from '@nestjs/config'
@@ -24,69 +25,87 @@ function buildOpenApiConfig() {
     .build()
 }
 
-async function bootstrap() {
+async function createApp() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true })
   app.useLogger(app.get(Logger))
+  return app
+}
 
+function configureCors(app: INestApplication, cors: ServerConfig['cors']) {
+  if (!cors.enabled)
+    return
+
+  const { allowedOrigins, allowCredentials, maxAgeSeconds } = cors
+
+  // 将白名单元素编译为通配符正则（`*` → `.*`，其余字符转义）
+  const patterns = allowedOrigins.map(rule =>
+    new RegExp(`^${rule.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`),
+  )
+
+  // origin 函数：按请求源动态决策
+  // - allowedOrigins 为空 → 反射任意源（允许全部）
+  // - 非空 → 精确 / 通配符匹配；命中则放行，否则拒绝
+  // 如需更复杂的动态逻辑（查 DB / 租户路由 / 异步校验），在此处替换实现即可
+  app.enableCors({
+    origin: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: boolean) => void) => {
+      if (patterns.length === 0)
+        return callback(null, true)
+      if (!requestOrigin)
+        return callback(null, false)
+      const allowed = patterns.some(re => re.test(requestOrigin))
+      callback(allowed ? null : new Error(`CORS: ${requestOrigin} 不在允许列表`), allowed)
+    },
+    credentials: allowCredentials,
+    maxAge: maxAgeSeconds,
+  })
+}
+
+/** Schema 变更一律由 migrations 管理；启动时自动应用未执行的迁移 */
+async function applyPendingMigrations(app: INestApplication) {
+  const migrator = app.get(MikroORM).migrator
+  const pending = await migrator.getPending()
+  if (pending.length === 0)
+    return
+  await migrator.up()
+  app.get(Logger).log(`已应用 ${pending.length} 个数据库迁移`)
+}
+
+/** 显式配置优先，否则按 NODE_ENV 推断（非生产开启） */
+function setupSwagger(app: INestApplication, server: ServerConfig, config: ConfigService): boolean {
+  const enabled = server.swagger.enabled ?? config.get<string>('NODE_ENV') !== 'production'
+  if (!enabled)
+    return false
+
+  const document = SwaggerModule.createDocument(app, buildOpenApiConfig())
+  SwaggerModule.setup(server.swagger.path, app, document, {
+    jsonDocumentUrl: `${server.swagger.path}-json`,
+    yamlDocumentUrl: `${server.swagger.path}-yaml`,
+    swaggerOptions: { persistAuthorization: true },
+  })
+  return true
+}
+
+function logStartup(app: INestApplication, server: ServerConfig, swaggerEnabled: boolean) {
+  const logger = app.get(Logger)
+  logger.log(`服务已启动：/${server.apiPrefix}`)
+  if (swaggerEnabled)
+    logger.log(`Swagger 文档：/${server.swagger.path}`)
+}
+
+async function bootstrap() {
+  const app = await createApp()
   const config = app.get(ConfigService)
   const server = config.getOrThrow<ServerConfig>('server')
 
   app.setGlobalPrefix(server.apiPrefix)
   app.enableShutdownHooks()
 
-  // CORS：enabled 为 false 时不挂载中间件
-  if (server.cors.enabled) {
-    const { allowedOrigins, allowCredentials, maxAgeSeconds } = server.cors
-
-    // 将白名单元素编译为通配符正则（`*` → `.*`，其余字符转义）
-    const patterns = allowedOrigins.map(rule =>
-      new RegExp(`^${rule.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`),
-    )
-
-    // origin 函数：按请求源动态决策
-    // - allowedOrigins 为空 → 反射任意源（允许全部）
-    // - 非空 → 精确 / 通配符匹配；命中则放行，否则拒绝
-    // 如需更复杂的动态逻辑（查 DB / 租户路由 / 异步校验），在此处替换实现即可
-    app.enableCors({
-      origin: (requestOrigin: string | undefined, callback: (err: Error | null, origin?: boolean) => void) => {
-        if (patterns.length === 0)
-          return callback(null, true)
-        if (!requestOrigin)
-          return callback(null, false)
-        const allowed = patterns.some(re => re.test(requestOrigin))
-        callback(allowed ? null : new Error(`CORS: ${requestOrigin} 不在允许列表`), allowed)
-      },
-      credentials: allowCredentials,
-      maxAge: maxAgeSeconds,
-    })
-  }
-
-  // Schema 变更一律由 migrations 管理；启动时自动应用未执行的迁移
-  const orm = app.get(MikroORM)
-  const migrator = orm.migrator
-  const pending = await migrator.getPending()
-  if (pending.length > 0) {
-    await migrator.up()
-    app.get(Logger).log(`已应用 ${pending.length} 个数据库迁移`)
-  }
-
-  // Swagger 文档：显式配置优先，否则按 NODE_ENV 推断（非生产开启）
-  const swaggerEnabled
-    = server.swagger.enabled ?? config.get<string>('NODE_ENV') !== 'production'
-  if (swaggerEnabled) {
-    const document = SwaggerModule.createDocument(app, buildOpenApiConfig())
-    SwaggerModule.setup(server.swagger.path, app, document, {
-      jsonDocumentUrl: `${server.swagger.path}-json`,
-      yamlDocumentUrl: `${server.swagger.path}-yaml`,
-      swaggerOptions: { persistAuthorization: true },
-    })
-  }
+  configureCors(app, server.cors)
+  await applyPendingMigrations(app)
+  const swaggerEnabled = setupSwagger(app, server, config)
 
   await app.listen(server.port)
-  app.get(Logger).log(`服务已启动：/${server.apiPrefix}`)
-  if (swaggerEnabled) {
-    app.get(Logger).log(`Swagger 文档：/${server.swagger.path}`)
-  }
+  logStartup(app, server, swaggerEnabled)
 }
 
 void bootstrap()

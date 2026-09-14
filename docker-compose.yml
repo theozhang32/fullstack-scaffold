@@ -1,6 +1,7 @@
 services:
   mysql:
-    image: mysql:8.4
+    image: mysql:5.7.44
+    platform: linux/amd64
     environment:
       MYSQL_DATABASE: scaffold
       MYSQL_USER: scaffold
@@ -17,6 +18,20 @@ services:
       retries: 20
       start_period: 20s
 
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
   server:
     build:
       context: .
@@ -29,6 +44,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?请在 .env 或环境中设置 JWT_SECRET（≥32 字符）}
       DB_DRIVER: mysql
       DB_URL: mysql://scaffold:scaffold@mysql:3306/scaffold
+      REDIS_URL: redis://redis:6379
       # 切 SQLite 示例：
       # DB_DRIVER: sqlite
       # DB_URL: /data/db.sqlite
@@ -36,6 +52,8 @@ services:
       # CORS_ORIGINS: http://localhost
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/v1/health"]
@@ -59,3 +77,4 @@ services:
 
 volumes:
   mysql-data:
+  redis-data:

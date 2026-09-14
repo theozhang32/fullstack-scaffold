@@ -5,9 +5,9 @@
 | 层 | 技术 |
 | --- | --- |
 | 前端 `apps/web` | Vue 3 + vue-router + pinia，antdv-next（自动按需引入）+ tailwindcss v4 |
-| 后端 `apps/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 MySQL，可切 SQLite）+ Swagger + pino 日志 + JWT |
+| 后端 `apps/server` | NestJS v11 + zod（nestjs-zod）+ MikroORM 7（默认 MySQL，可切 SQLite）+ Redis 7（`@nestjs/cache-manager` + `@keyv/redis`）+ Swagger + pino 日志 + JWT |
 | 契约 `packages/shared` | 前后端同源 zod schema / 类型 / 常量（用户、登录、分页、响应包），tsdown 构建出 ESM + CJS |
-| 配置 `packages/config` | env 校验 + web/server 运行时配置（端口、CORS、JWT、分页、日志脱敏） |
+| 配置 `packages/config` | env 校验 + web/server 运行时配置（端口、CORS、JWT、分页、日志脱敏）；敏感/部署参数含 JWT_SECRET、DB_URL、REDIS_URL |
 | 基础 `packages/tsconfig` | 共享 tsconfig 预设（`base.json` / `nestjs.json`） |
 
 ## 快速开始
@@ -20,6 +20,10 @@ pnpm install
 # 后端环境变量（JWT_SECRET 需 ≥32 字符，可用 openssl rand -hex 48 生成）
 cp apps/server/.env.example apps/server/.env
 $EDITOR apps/server/.env
+
+# 本地依赖：MySQL 5.7.44 + Redis 7（也可用自建实例，对应改 .env 的 DB_URL / REDIS_URL）
+# compose 解析整份文件时需要 JWT_SECRET，仅起依赖时占位即可
+JWT_SECRET="${JWT_SECRET:-local-dev-placeholder-secret-32chars}" docker compose up -d mysql redis
 
 # 初始化数据库：应用迁移 + 创建初始管理员 admin / admin123456
 pnpm --filter @fullstack-scaffold/server db:seed
@@ -54,7 +58,8 @@ apps/
         ├── entities/index.ts   # MikroORM 实体注册表
         ├── migrations/         # 数据库迁移（schema 变更唯一途径）
         ├── mikro-orm.config.ts # ORM 配置（app 与 CLI 共用）
-        └── modules/            # 业务模块（auth、users 示例）
+        └── modules/            # 业务模块（auth、users）+ 基础设施（redis）
+            ├── redis/                  # Redis 7：CacheModule + Keyv store
             └── users/
                 ├── user.entity.ts        # 实体定义
                 ├── user.repository.ts    # 数据访问层
@@ -77,7 +82,8 @@ packages/
 - **认证**：全局 `JwtAuthGuard`（`@Public()` 标记免认证），`JwtAuthGuard` 校验令牌后按 id 加载数据库最新用户挂到 `request.user`。`AuthModule` 显式 `imports: [UsersModule]`，`UsersModule` 不标 `@Global()`。
 - **角色**：`@Roles('ADMIN')` 标记 + 全局 `RolesGuard`（任一满足即可）。
 - **限流**：全局 `ThrottlerGuard`；`POST /auth/login` 额外限制为每 IP 每分钟 5 次。`/health` 跳过限流。
-- **健康检查**：`GET /api/v1/health` 探测进程存活并 `checkConnection()` 数据库，失败返回 503。
+- **健康检查**：`GET /api/v1/health` 探测进程存活，并检查数据库与 Redis 连通性，失败返回 503。
+- **Redis / 缓存**：`RedisModule` 按官方 [Caching](https://docs.nestjs.com/techniques/caching) 接入 `CacheModule`（store 为 `@keyv/redis`）。`isGlobal: true` 后各处 `@Inject(CACHE_MANAGER)` 注入 `Cache`，用 `get` / `set` / `del`；不要再直连 Redis 客户端。
 - **Swagger**：`common/openapi.ts` 里的 `ZodBody` / `ZodQuery` / `ZodParams` / `ApiOkData` 直接从 zod schema 生成 OpenAPI 3.1 文档，文档与校验同源。
 
 ### 新增一个模块（示例：article）
@@ -118,7 +124,7 @@ packages/
 # 前端（nginx:80，静态资源 + /api 反代到 API_UPSTREAM）
 docker build --target web -t fullstack-scaffold-web .
 
-# 后端（node:3000，默认 MySQL，需注入 DB_URL）
+# 后端（node:3000，默认 MySQL + Redis，需注入 DB_URL / REDIS_URL）
 docker build --target server -t fullstack-scaffold-server .
 ```
 
@@ -131,7 +137,7 @@ docker compose up --build
 ```
 
 - `web` 镜像通过环境变量 `API_UPSTREAM`（默认 `http://server:3000`）把 `/api` 反代到后端，与前端 `apiBaseUrl: /api/v1` 同域，无需开 CORS。
-- `server` 需注入 `JWT_SECRET`（≥32 字符）与 `DB_URL`（compose 默认连同栈 `mysql` 服务）；`DB_DRIVER` 默认 `mysql`，可改为 `sqlite`。
+- `server` 需注入 `JWT_SECRET`（≥32 字符）、`DB_URL`（compose 默认连同栈 `mysql:5.7.44`）与 `REDIS_URL`（compose 默认连同栈 `redis:7`）；`DB_DRIVER` 默认 `mysql`，可改为 `sqlite`。
 
 ## AI 辅助配置
 
