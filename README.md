@@ -1,6 +1,6 @@
 # Fullstack Scaffold
 
-从 `apps-resources-management` 抽离的最小全栈脚手架：去掉全部业务逻辑，保留可复用的工程范式。
+最小全栈脚手架：不含业务逻辑，保留可复用的工程范式。
 
 | 层 | 技术 |
 | --- | --- |
@@ -110,16 +110,31 @@ packages/
 | `pnpm --filter @fullstack-scaffold/server migration:pending` | 查看待应用迁移 |
 | `pnpm --filter @fullstack-scaffold/server db:seed` | 应用迁移 + 初始管理员 |
 
+## Docker
+
+仓库根目录单文件 `Dockerfile`，用 `--target` 分别产出前后端镜像：
+
+```bash
+# 前端（nginx:80，静态资源 + /api 反代到 API_UPSTREAM）
+docker build --target web -t fullstack-scaffold-web .
+
+# 后端（node:3000，SQLite 默认写 /data/db.sqlite）
+docker build --target server -t fullstack-scaffold-server .
+```
+
+本地联调可用 compose（web 映射 `8080`，server `3000`）：
+
+```bash
+export JWT_SECRET="$(openssl rand -hex 48)"
+docker compose up --build
+# 前端 http://localhost:8080  ·  API http://localhost:3000/api/v1
+```
+
+- `web` 镜像通过环境变量 `API_UPSTREAM`（默认 `http://server:3000`）把 `/api` 反代到后端，与前端 `apiBaseUrl: /api/v1` 同域，无需开 CORS。
+- `server` 需注入 `JWT_SECRET`（≥32 字符）与 `DB_URL`（compose 默认 `/data/db.sqlite`）；数据目录建议挂卷。
+
 ## AI 辅助配置
 
 - `.agents/skills/`：与 AI 编码助手配套的技能参考文档（vue / pinia / vue-router / vite / pnpm / tsdown / antfu eslint / nestjs / antdv-next 等 18 个），助手写代码时可据此对齐本项目的技术栈范式。
-- `.agents/mcp.json` 与 `.zcode/config.json`：MCP 服务器配置，默认为空；源项目在此挂了 Apifox API 文档 MCP（含项目专属令牌），接入自己的 Apifox 项目时按原结构填回即可。
+- `.agents/mcp.json` 与 `.zcode/config.json`：MCP 服务器配置，默认为空；接入 Apifox 等 MCP 时按结构填入即可。
 - `skills-lock.json`：外部技能（如 `nestjs-best-practices`）的来源锁定文件。
-
-## 与源项目的差异
-
-- 业务模块（资源台账/拓扑/字典/审计/RBAC 权限点/运维 SSO）全部移除，只保留 auth + users 示例。
-- MySQL → SQLite（`DB_STORAGE` 文件）；换回 MySQL/PostgreSQL 只需替换 `@mikro-orm/sqlite` 驱动与 `mikro-orm.config.ts` 连接参数。
-- 权限模型从「角色 × 权限点矩阵」简化为「角色数组」；需要更细粒度时参照源项目恢复 `common/rbac.ts` + `PermissionsGuard` 即可。
-- 移除 Docker、jest 测试与 CSV 导入导出等业务化设施。CI 为最小 `lint + build`（`.github/workflows/ci.yml`）。
-- `.agents` 技能文档完整保留；源项目 Apifox MCP 的项目 ID 与访问令牌未迁移（属源项目专属凭证）。

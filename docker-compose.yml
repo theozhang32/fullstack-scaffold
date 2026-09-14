@@ -1,0 +1,38 @@
+services:
+  server:
+    build:
+      context: .
+      target: server
+    image: fullstack-scaffold-server
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 或环境中设置 JWT_SECRET（≥32 字符）}
+      DB_URL: /data/db.sqlite
+      # 经 web 同域反代时通常不需要；若直连前端 Origin 再开启 CORS 并设置白名单
+      # CORS_ORIGINS: http://localhost
+    volumes:
+      - server-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/v1/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      target: web
+    image: fullstack-scaffold-web
+    ports:
+      - "8080:80"
+    environment:
+      API_UPSTREAM: http://server:3000
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  server-data:

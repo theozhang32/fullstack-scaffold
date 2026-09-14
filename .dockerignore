@@ -1,0 +1,34 @@
+# 依赖与构建产物（镜像内重新安装/构建）
+**/node_modules
+**/dist
+**/.turbo
+**/.vite
+**/.eslintcache
+coverage
+.pnpm-store
+
+# 本地环境与数据
+.env
+.env.*
+!.env.example
+/data
+*.sqlite
+*.sqlite-*
+
+# Git / IDE / 本地工具
+.git
+.github
+.vscode
+.idea
+.DS_Store
+*.log
+.agents
+.zcode
+skills-lock.json
+
+# 文档与测试杂项（构建不需要）
+**/*.md
+!README.md
+**/__tests__
+**/*.spec.ts
+**/*.test.ts
